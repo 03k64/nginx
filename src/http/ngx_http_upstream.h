@@ -335,6 +335,11 @@ struct ngx_http_upstream_s {
     ngx_array_t                     *caches;
 #endif
 
+#define HAVE_NGX_UPSTREAM_TIMEOUT_FIELDS  1
+    ngx_msec_t                       connect_timeout;
+    ngx_msec_t                       send_timeout;
+    ngx_msec_t                       read_timeout;
+
     ngx_http_upstream_headers_in_t   headers_in;
 
     ngx_http_upstream_resolved_t    *resolved;
@@ -435,6 +440,11 @@ ngx_int_t ngx_http_upstream_hide_headers_hash(ngx_conf_t *cf,
 extern ngx_module_t        ngx_http_upstream_module;
 extern ngx_conf_bitmask_t  ngx_http_upstream_cache_method_mask[];
 extern ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[];
+
+
+#ifndef HAVE_BALANCER_STATUS_CODE_PATCH
+#define HAVE_BALANCER_STATUS_CODE_PATCH
+#endif
 
 
 #endif /* _NGX_HTTP_UPSTREAM_H_INCLUDED_ */

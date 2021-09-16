@@ -362,8 +362,15 @@ ngx_signal_handler(int signo, siginfo_t *siginfo, void *ucontext)
             break;
 
         case ngx_signal_value(NGX_RECONFIGURE_SIGNAL):
-            ngx_reconfigure = 1;
-            action = ", reconfiguring";
+            if (ngx_process == NGX_PROCESS_SINGLE) {
+                ngx_terminate = 1;
+                action = ", exiting";
+
+            } else {
+                ngx_reconfigure = 1;
+                action = ", reconfiguring";
+            }
+
             break;
 
         case ngx_signal_value(NGX_REOPEN_SIGNAL):

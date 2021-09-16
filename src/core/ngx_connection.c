@@ -1034,6 +1034,12 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
     ls = cycle->listening.elts;
     for (i = 0; i < cycle->listening.nelts; i++) {
 
+#if (NGX_HAVE_REUSEPORT)
+        if (ls[i].fd == (ngx_socket_t) -1) {
+            continue;
+        }
+#endif
+
         c = ls[i].connection;
 
         if (c) {
