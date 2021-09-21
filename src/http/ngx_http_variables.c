@@ -372,6 +372,9 @@ static ngx_http_variable_t  ngx_http_core_variables[] = {
 
     { ngx_string("tcpinfo_rcv_space"), NULL, ngx_http_variable_tcpinfo,
       3, NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("tcpinfo_snd_mss"), NULL, ngx_http_variable_tcpinfo,
+      4, NGX_HTTP_VAR_NOCACHEABLE, 0 },
 #endif
 
     { ngx_string("http_"), NULL, ngx_http_variable_unknown_header_in,
@@ -1126,6 +1129,10 @@ ngx_http_variable_tcpinfo(ngx_http_request_t *r, ngx_http_variable_value_t *v,
 
     case 3:
         value = ti.tcpi_rcv_space;
+        break;
+
+    case 4:
+        value = ti.tcpi_snd_mss;
         break;
 
     /* suppress warning */
