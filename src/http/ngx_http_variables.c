@@ -9,6 +9,9 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
+#if (NGX_QUIC)
+#include <quiche.h>
+#endif
 
 
 static ngx_http_variable_t *ngx_http_add_prefix_variable(ngx_conf_t *cf,
@@ -46,6 +49,10 @@ static ngx_int_t ngx_http_variable_argument(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 #if (NGX_HAVE_TCP_INFO)
 static ngx_int_t ngx_http_variable_tcpinfo(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
+#endif
+#if (NGX_QUIC)
+static ngx_int_t ngx_http_variable_quicinfo(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 #endif
 
@@ -375,6 +382,11 @@ static ngx_http_variable_t  ngx_http_core_variables[] = {
 
     { ngx_string("tcpinfo_snd_mss"), NULL, ngx_http_variable_tcpinfo,
       4, NGX_HTTP_VAR_NOCACHEABLE, 0 },
+#endif
+
+#if (NGX_QUIC)
+    { ngx_string("quicinfo_tput_bps"), NULL, ngx_http_variable_quicinfo,
+      0, NGX_HTTP_VAR_NOCACHEABLE, 0 },
 #endif
 
     { ngx_string("http_"), NULL, ngx_http_variable_unknown_header_in,
@@ -1139,6 +1151,45 @@ ngx_http_variable_tcpinfo(ngx_http_request_t *r, ngx_http_variable_value_t *v,
     default:
         value = 0;
         break;
+    }
+
+    v->len = ngx_sprintf(v->data, "%uD", value) - v->data;
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
+
+#endif
+
+#if (NGX_QUIC)
+
+static ngx_int_t
+ngx_http_variable_quicinfo(ngx_http_request_t *r, ngx_http_variable_value_t *v,
+    uintptr_t data)
+{
+    ngx_connection_t       *c;
+    quiche_stats            qi;
+    size_t                  value;
+
+    c = r->qstream->connection->connection;
+    quiche_conn_stats(c->quic->conn, &qi);
+
+    v->data = ngx_pnalloc(r->pool, NGX_SIZE_T_LEN);
+    if (v->data == NULL) {
+        return NGX_ERROR;
+    }
+
+    switch (data) {
+        case 0:
+            value = qi.delivery_rate;
+            break;
+
+        /* suppress warning - copied from ngx_http_variable_tcpinfo */
+        default:
+            value = 0;
+            break;
     }
 
     v->len = ngx_sprintf(v->data, "%uD", value) - v->data;
