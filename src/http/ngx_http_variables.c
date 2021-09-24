@@ -387,6 +387,9 @@ static ngx_http_variable_t  ngx_http_core_variables[] = {
 #if (NGX_QUIC)
     { ngx_string("quicinfo_tput_bps"), NULL, ngx_http_variable_quicinfo,
       0, NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("quicinfo_rtt_us"), NULL, ngx_http_variable_quicinfo,
+      1, NGX_HTTP_VAR_NOCACHEABLE, 0 },
 #endif
 
     { ngx_string("http_"), NULL, ngx_http_variable_unknown_header_in,
@@ -1184,6 +1187,10 @@ ngx_http_variable_quicinfo(ngx_http_request_t *r, ngx_http_variable_value_t *v,
     switch (data) {
         case 0:
             value = qi.delivery_rate;
+            break;
+
+        case 1:
+            value = qi.rtt / 1000;
             break;
 
         /* suppress warning - copied from ngx_http_variable_tcpinfo */
