@@ -119,12 +119,12 @@ ngx_quic_create_connection(ngx_quic_t *quic, ngx_connection_t *c)
     ngx_quic_connection_t  *qc;
 
     /* Fix qlog_title to server hostname, qlog_desc to nginx version ino
-     * summary. Set qlog_path to have capacity of double the max length of
-     * server connection ID (scid) + 6, where the 6 is '.json' plus the NUL
-     * terminator character. SCID composed of random bytes, in order to ensure
-     * these are valid characters to be present in a filename, convert each
-     * byte to a 2-char HEX string. */
-    char                    qlog_path[46];
+     * summary. Set qlog_path to have capacity of double QUICHE_MAX_CONN_ID_LEN
+     * plus space for dir path `/var/log/nginx/qlog` (20), extension `.json`
+     * (5) and NUL terminator (1) for a total of 66. SCID is composed of random
+     * bytes that are not necessarily valid filename characters, therefore each
+     * byte is represented as a 2-digit hex number. */
+    char                    qlog_path[66];
     char                   *qlog_title = "rocinante";
     char                   *qlog_desc = "nginx/1.19.9/quiche/qlog";
 
@@ -201,7 +201,7 @@ ngx_quic_create_connection(ngx_quic_t *quic, ngx_connection_t *c)
      * known length */
     sprintf(
         qlog_path,
-        "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X.json",
+        "/var/log/nginx/qlog/%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X.json",
         scid[0], scid[1], scid[2], scid[3], scid[4], scid[5], scid[6], scid[7],
         scid[8], scid[9], scid[10], scid[11], scid[12], scid[13], scid[14],
         scid[15], scid[16], scid[17], scid[18], scid[19]
