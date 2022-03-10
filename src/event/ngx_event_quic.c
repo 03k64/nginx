@@ -124,9 +124,9 @@ ngx_quic_create_connection(ngx_quic_t *quic, ngx_connection_t *c)
      * terminator character. SCID composed of random bytes, in order to ensure
      * these are valid characters to be present in a filename, convert each
      * byte to a 2-char HEX string. */
-    u_char                  qlog_path[46];
-    u_char                 *qlog_title = "rocinante";
-    u_char                 *qlog_desc = "nginx/1.19.9/quiche/qlog";
+    char                    qlog_path[46];
+    char                   *qlog_title = "rocinante";
+    char                   *qlog_desc = "nginx/1.19.9/quiche/qlog";
 
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, "quic init connection");
 
