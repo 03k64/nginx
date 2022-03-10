@@ -118,6 +118,16 @@ ngx_quic_create_connection(ngx_quic_t *quic, ngx_connection_t *c)
 
     ngx_quic_connection_t  *qc;
 
+    /* Fix qlog_title to server hostname, qlog_desc to nginx version ino
+     * summary. Set qlog_path to have capacity of double the max length of
+     * server connection ID (scid) + 6, where the 6 is '.json' plus the NUL
+     * terminator character. SCID composed of random bytes, in order to ensure
+     * these are valid characters to be present in a filename, convert each
+     * byte to a 2-char HEX string. */
+    u_char                  qlog_path[46];
+    u_char                 *qlog_title = "rocinante";
+    u_char                 *qlog_desc = "nginx/1.19.9/quiche/qlog";
+
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, "quic init connection");
 
     /* Extract some fields from the client's Initial packet, which was saved
@@ -182,6 +192,23 @@ ngx_quic_create_connection(ngx_quic_t *quic, ngx_connection_t *c)
 
     qc = ngx_pcalloc(c->pool, sizeof(ngx_quic_connection_t));
     if (qc == NULL) {
+        quiche_conn_free(conn);
+        return NGX_ERROR;
+    }
+
+    /* This is rubbish to look at but _should_ get the job of converting the
+     * SCID to a hex string done with maximum efficiency given that SCID is a
+     * known length */
+    sprintf(
+        qlog_path,
+        "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X.json",
+        scid[0], scid[1], scid[2], scid[3], scid[4], scid[5], scid[6], scid[7],
+        scid[8], scid[9], scid[10], scid[11], scid[12], scid[13], scid[14],
+        scid[15], scid[16], scid[17], scid[18], scid[19]
+    );
+
+    if (!quiche_conn_set_qlog_path(conn, qlog_path, qlog_title, qlog_desc)) {
+        ngx_log_error(NGX_LOG_ERR, c->log, 0, "failed to create qlog file");
         quiche_conn_free(conn);
         return NGX_ERROR;
     }
